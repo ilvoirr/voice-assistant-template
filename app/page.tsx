@@ -207,7 +207,7 @@ const InputForm = React.memo(React.forwardRef<InputFormHandle, InputFormProps>((
             "transition-colors duration-300",
             isDarkMode ? "text-white placeholder-zinc-500" : "text-zinc-900 placeholder-zinc-400")
           }
-          placeholder={isVoiceModeActive ? "Listening..." : "Message chatbot..."}
+          placeholder={isVoiceModeActive ? "Listening..." : "Ask anything. "}
           rows={1}
           disabled={isLoading}
         />
@@ -817,7 +817,7 @@ export default function ChatPage() {
               "transition-colors duration-300",
               isDarkMode ? "text-white" : "text-zinc-900"
             )}>
-              AI Chatbot
+              Voice Assistant
             </h1>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -1139,7 +1139,7 @@ export default function ChatPage() {
                 "transition-colors duration-300",
                 isDarkMode ? "text-white" : "text-zinc-900"
               )}>
-                AI Chatbot
+                Voice Assistant
               </h1>
             </div>
             <div className={cn(
