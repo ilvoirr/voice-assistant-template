@@ -122,13 +122,15 @@ interface InputFormProps {
   onFileAttachClick: () => void
   fileName: string | null
   onRemoveFile: () => void
+  isMobile: boolean // <-- NEW PROP
 }
 
 const InputForm = React.memo(({
   centered = false,
   input, setInput, isLoading, isDarkMode, handleSubmit, handleKeyDown,
   isVoiceModeActive, onVoiceToggle,
-  onFileAttachClick, fileName, onRemoveFile // <-- Destructure new props
+  onFileAttachClick, fileName, onRemoveFile, // <-- Destructure new props
+  isMobile // <-- NEW PROP
 }: InputFormProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
@@ -147,9 +149,22 @@ const InputForm = React.memo(({
           'transition-colors duration-300', centered && 'mt-8',
           isDarkMode
             ? "bg-zinc-900/70 backdrop-blur-md border-zinc-800 shadow-zinc-950/70"
-            : "bg-white/90 backdrop-blur border-zinc-200"
-        )}>
-        
+            : "bg-white/90 backdrop-blur border-zinc-200",
+          // Conditionally apply fixed positioning ONLY on mobile
+          isMobile && "rounded-none border-t border-x-0 border-b-0"
+        )}
+        // --- NEW: Apply fixed positioning styles only on mobile ---
+        style={isMobile ? {
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          boxShadow: '0 -2px 16px rgba(0,0,0,0.03)',
+        } : {}}
+      >
+
         {/* --- New File Attachment UI --- */}
         {fileName && (
           <div className={cn(
@@ -191,6 +206,8 @@ const InputForm = React.memo(({
           placeholder={isVoiceModeActive ? "Listening..." : "Message chatbot..."}
           rows={1}
           disabled={isLoading}
+          autoComplete="off" // <-- NEW
+          style={{ fontSize: '1rem' }} // <-- NEW
         />
         <div className="flex items-center justify-between px-4 pb-3 pt-1">
           <button
@@ -239,16 +256,20 @@ const InputForm = React.memo(({
           </div>
         </div>
       </form>
-      <p className={cn(
-        "text-xs pt-2 text-center select-none",
-        "transition-colors duration-300",
-        isDarkMode ? "text-zinc-600" : "text-zinc-500"
-      )}>
-        {isVoiceModeActive
-          ? "Voice mode active - speak naturally, pause to send"
-          : <>Press <kbd className={cn("font-medium transition-colors duration-300", isDarkMode ? "text-zinc-500" : "text-zinc-600")}>Enter</kbd> to send, or <kbd className={cn("font-medium transition-colors duration-300", isDarkMode ? "text-zinc-500" : "text-zinc-600")}>Shift + Enter</kbd> for a new line.</>
-        }
-      </p>
+      {/* Show helper text only if not in fixed mobile view OR if centered */}
+      {(!isMobile || centered) && (
+        <p className={cn(
+          "text-xs pt-2 text-center select-none",
+          "transition-colors duration-300",
+          isDarkMode ? "text-zinc-600" : "text-zinc-500",
+          isMobile && centered && "pb-4" // Add padding if centered on mobile so text isn't hidden
+        )}>
+          {isVoiceModeActive
+            ? "Voice mode active - speak naturally, pause to send"
+            : <>Press <kbd className={cn("font-medium transition-colors duration-300", isDarkMode ? "text-zinc-500" : "text-zinc-600")}>Enter</kbd> to send, or <kbd className={cn("font-medium transition-colors duration-300", isDarkMode ? "text-zinc-500" : "text-zinc-600")}>Shift + Enter</kbd> for a new line.</>
+          }
+        </p>
+      )}
     </>
   )
 })
@@ -261,7 +282,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isDarkMode, setIsDarkMode] = useState(false)
-  
+
   // --- NEW: Mobile state ---
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
@@ -287,7 +308,7 @@ export default function ChatPage() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const prevIsLoadingRef = useRef(isLoading)
   const [lastTTSMessageId, setLastTTSMessageId] = useState<string | null>(null)
-  
+
   // --- NEW: Effect to check device size ---
   useEffect(() => {
     const checkDevice = () => setIsMobile(window.innerWidth < 768); // 768px is 'md' breakpoint
@@ -396,7 +417,7 @@ export default function ChatPage() {
 
     const allowedExtensions = ['.txt', '.md', '.js', '.ts', '.tsx', '.jsx', '.css', '.html', '.json', '.py', '.c', '.cpp', '.go', '.java']
     const fileExtension = file.name.slice(file.name.lastIndexOf('.'))
-    
+
     if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
       alert('Please upload a valid text file (e.g., .txt, .md, .js, .ts, .css, .html, .json, .py).')
       if (e.target) e.target.value = ''
@@ -726,14 +747,14 @@ export default function ChatPage() {
     }
   }
 
-// --- NEW: Render function for Mobile View ---
+  // --- NEW: Render function for Mobile View ---
   const renderMobileView = () => {
     return (
       <div className={cn(
         "relative flex h-screen w-full font-sans antialiased transition-colors duration-300",
         isDarkMode ? "bg-zinc-950 text-white" : "bg-white text-zinc-900"
       )}>
-        
+
         {/* --- Hidden File Input --- */}
         <input
           type="file"
@@ -752,7 +773,7 @@ export default function ChatPage() {
             aria-hidden="true"
           />
         )}
-  
+
         {/* --- Mobile Sidebar (Slide-out Drawer) --- */}
         <aside className={cn(
           "flex flex-col w-64 border-r flex-shrink-0",
@@ -893,10 +914,14 @@ export default function ChatPage() {
             </div>
           </div>
         </aside>
-  
+
         {/* --- Main Content (Empty Chat) --- */}
         {activeChat && activeChat.messages.length === 0 ? (
-          <main className="flex flex-col flex-1 h-screen overflow-hidden">
+          <main 
+            className="flex flex-col flex-1 h-screen overflow-hidden"
+            // --- NEW: Add padding to main container to avoid overlap with fixed input ---
+            style={{ paddingBottom: 'calc(92px + env(safe-area-inset-bottom))' }}
+          >
             {/* --- MODIFIED HEADER --- */}
             <header className={cn(
               "flex items-center justify-between h-[60px] border-b px-4 z-10 flex-shrink-0",
@@ -919,7 +944,7 @@ export default function ChatPage() {
                   <PanelLeft size={19} className={isDarkMode ? "text-zinc-400" : "text-zinc-600"} />
                 </button>
               </div>
-              
+
               {/* Centered Title */}
               <div className="flex-1 text-center min-w-0">
                 <h2 className={cn(
@@ -1006,13 +1031,18 @@ export default function ChatPage() {
                   onFileAttachClick={() => fileInputRef.current?.click()}
                   fileName={fileName}
                   onRemoveFile={handleRemoveFile}
+                  isMobile={true} // <-- Pass prop
                 />
               </div>
             </div>
           </main>
         ) : (
           // --- Main Content (Active Chat) ---
-          <main className="flex flex-col flex-1 h-screen overflow-hidden">
+          <main 
+            className="flex flex-col flex-1 h-screen overflow-hidden"
+            // --- NEW: Add padding to main container to avoid overlap with fixed input ---
+            style={{ paddingBottom: 'calc(92px + env(safe-area-inset-bottom))' }}
+          >
             {/* --- MODIFIED HEADER --- */}
             <header className={cn(
               "flex items-center justify-between h-[60px] border-b px-4 z-10 flex-shrink-0",
@@ -1035,7 +1065,7 @@ export default function ChatPage() {
                   <PanelLeft size={19} className={isDarkMode ? "text-zinc-400" : "text-zinc-600"} />
                 </button>
               </div>
-              
+
               {/* Centered Title */}
               <div className="flex-1 text-center min-w-0">
                 <h2 className={cn(
@@ -1090,7 +1120,7 @@ export default function ChatPage() {
               </div>
             </header>
             {/* --- END MODIFIED HEADER --- */}
-            
+
             <div className={cn(
               "flex-1 overflow-y-auto",
               "[&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-300",
@@ -1142,27 +1172,23 @@ export default function ChatPage() {
                 </div>
               </div>
             </div>
-            <div className={cn(
-              "px-4 pt-0 pb-4 flex-shrink-0",
-              "transition-colors duration-300",
-              isDarkMode ? "border-zinc-800" : "border-zinc-200"
-            )}>
-              <div className="max-w-4xl mx-auto">
-                <InputForm
-                  input={input}
-                  setInput={setInput}
-                  isLoading={isLoading}
-                  isDarkMode={isDarkMode}
-                  handleSubmit={handleSubmit}
-                  handleKeyDown={handleKeyDown}
-                  isVoiceModeActive={isVoiceModeActive}
-                  onVoiceToggle={handleVoiceToggle}
-                  onFileAttachClick={() => fileInputRef.current?.click()}
-                  fileName={fileName}
-                  onRemoveFile={handleRemoveFile}
-                />
-              </div>
-            </div>
+            
+            {/* --- NEW: Fixed InputForm, no wrapper div --- */}
+            <InputForm
+              input={input}
+              setInput={setInput}
+              isLoading={isLoading}
+              isDarkMode={isDarkMode}
+              handleSubmit={handleSubmit}
+              handleKeyDown={handleKeyDown}
+              isVoiceModeActive={isVoiceModeActive}
+              onVoiceToggle={handleVoiceToggle}
+              onFileAttachClick={() => fileInputRef.current?.click()}
+              fileName={fileName}
+              onRemoveFile={handleRemoveFile}
+              isMobile={true} // <-- Pass prop
+            />
+
           </main>
         )}
       </div>
@@ -1186,7 +1212,7 @@ export default function ChatPage() {
           accept=".txt,.md,.js,.ts,.tsx,.jsx,.css,.html,.json,.py,.c,.cpp,.go,.java"
         />
         <audio ref={audioRef} style={{ display: "none" }} />
-  
+
         {/* Sidebar - (unchanged) */}
         {sidebarOpen && (
           <aside className={cn(
@@ -1316,7 +1342,7 @@ export default function ChatPage() {
             </div>
           </aside>
         )}
-  
+
         {/* Main Content - (unchanged structure) */}
         {activeChat && activeChat.messages.length === 0 ? (
           <main className="flex flex-col flex-1 h-screen overflow-hidden">
@@ -1417,6 +1443,7 @@ export default function ChatPage() {
                   onFileAttachClick={() => fileInputRef.current?.click()}
                   fileName={fileName}
                   onRemoveFile={handleRemoveFile}
+                  isMobile={false} // <-- Pass prop
                 />
               </div>
             </div>
@@ -1558,6 +1585,7 @@ export default function ChatPage() {
                   onFileAttachClick={() => fileInputRef.current?.click()}
                   fileName={fileName}
                   onRemoveFile={handleRemoveFile}
+                  isMobile={false} // <-- Pass prop
                 />
               </div>
             </div>
