@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+VOICE ASSISTANT TEMPLATE
 
-## Getting Started
+This is a simple, minimal-dependency template for building a fully functional voice assistant. It's designed to be extremely fast to modify, making it perfect for hackathons.
 
-First, run the development server:
+WHY THIS TEMPLATE?
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Finding a good chatbot UI is harder than it looks. Most open-source templates are either:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Component Forests: Split into dozens of files, making it impossible to quickly find and change what you want.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Docker-Dependent: Require a complex build process just to get started.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This template solves that. It's a Next.js app where the entire UI is in one file (page.tsx).
 
-## Learn More
+If you want to add a button, change the layout, or modify the API calls, you can do it in seconds without hunting through a complex file structure.
 
-To learn more about Next.js, take a look at the following resources:
+FEATURES
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Fully functional voice-to-text (listens to you).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Fully functional text-to-voice (responds in a natural voice).
 
-## Deploy on Vercel
+Real-time interrupt handling (it stops speaking if you interrupt, just like a real assistant).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Entire UI is in page.tsx for fast hackathon development.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Backend logic is cleanly separated into Next.js API routes.
+
+INSTALLATION AND SETUP
+
+Clone the repository: git clone https://github.com/ilvoirr/voice-assistant-template.git
+
+Navigate into the directory: cd voice-assistant-template
+
+Install all required packages: npm install
+
+Set up your API keys: Create a new file named .env.local in the main project folder.
+
+Open the .env.local file and add your keys for the services used: GROQ_API_KEY=your_groq_api_key_goes_here DEEPGRAM_API_KEY=your_deepgram_api_key_goes_here
+
+RUNNING THE PROJECT
+
+Run the development server: npm run dev
+
+Open your browser and go to: http://localhost:3000
+
+The voice assistant is now running locally.
+
+HOW TO MODIFY
+
+This template is built for speed:
+
+To change the UI (layout, buttons, colors): Edit the page.tsx file.
+
+To change the backend logic: Edit the files in the app/api/ directory. You will find separate API routes for:
+
+The chat logic
+
+The voice-to-text (STT) logic
+
+The text-to-voice (TTS) logic
