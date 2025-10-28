@@ -122,15 +122,13 @@ interface InputFormProps {
   onFileAttachClick: () => void
   fileName: string | null
   onRemoveFile: () => void
-  isMobile: boolean // <-- NEW PROP
 }
 
 const InputForm = React.memo(({
   centered = false,
   input, setInput, isLoading, isDarkMode, handleSubmit, handleKeyDown,
   isVoiceModeActive, onVoiceToggle,
-  onFileAttachClick, fileName, onRemoveFile, // <-- Destructure new props
-  isMobile // <-- NEW PROP
+  onFileAttachClick, fileName, onRemoveFile // <-- Destructure new props
 }: InputFormProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
@@ -149,22 +147,9 @@ const InputForm = React.memo(({
           'transition-colors duration-300', centered && 'mt-8',
           isDarkMode
             ? "bg-zinc-900/70 backdrop-blur-md border-zinc-800 shadow-zinc-950/70"
-            : "bg-white/90 backdrop-blur border-zinc-200",
-          // Conditionally apply fixed positioning ONLY on mobile
-          isMobile && "rounded-none border-t border-x-0 border-b-0"
-        )}
-        // --- NEW: Apply fixed positioning styles only on mobile ---
-        style={isMobile ? {
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 50,
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          boxShadow: '0 -2px 16px rgba(0,0,0,0.03)',
-        } : {}}
-      >
-
+            : "bg-white/90 backdrop-blur border-zinc-200"
+        )}>
+        
         {/* --- New File Attachment UI --- */}
         {fileName && (
           <div className={cn(
@@ -206,8 +191,6 @@ const InputForm = React.memo(({
           placeholder={isVoiceModeActive ? "Listening..." : "Message chatbot..."}
           rows={1}
           disabled={isLoading}
-          autoComplete="off" // <-- NEW
-          style={{ fontSize: '1rem' }} // <-- NEW
         />
         <div className="flex items-center justify-between px-4 pb-3 pt-1">
           <button
@@ -256,20 +239,16 @@ const InputForm = React.memo(({
           </div>
         </div>
       </form>
-      {/* Show helper text only if not in fixed mobile view OR if centered */}
-      {(!isMobile || centered) && (
-        <p className={cn(
-          "text-xs pt-2 text-center select-none",
-          "transition-colors duration-300",
-          isDarkMode ? "text-zinc-600" : "text-zinc-500",
-          isMobile && centered && "pb-4" // Add padding if centered on mobile so text isn't hidden
-        )}>
-          {isVoiceModeActive
-            ? "Voice mode active - speak naturally, pause to send"
-            : <>Press <kbd className={cn("font-medium transition-colors duration-300", isDarkMode ? "text-zinc-500" : "text-zinc-600")}>Enter</kbd> to send, or <kbd className={cn("font-medium transition-colors duration-300", isDarkMode ? "text-zinc-500" : "text-zinc-600")}>Shift + Enter</kbd> for a new line.</>
-          }
-        </p>
-      )}
+      <p className={cn(
+        "text-xs pt-2 text-center select-none",
+        "transition-colors duration-300",
+        isDarkMode ? "text-zinc-600" : "text-zinc-500"
+      )}>
+        {isVoiceModeActive
+          ? "Voice mode active - speak naturally, pause to send"
+          : <>Press <kbd className={cn("font-medium transition-colors duration-300", isDarkMode ? "text-zinc-500" : "text-zinc-600")}>Enter</kbd> to send, or <kbd className={cn("font-medium transition-colors duration-300", isDarkMode ? "text-zinc-500" : "text-zinc-600")}>Shift + Enter</kbd> for a new line.</>
+        }
+      </p>
     </>
   )
 })
@@ -282,7 +261,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isDarkMode, setIsDarkMode] = useState(false)
-
+  
   // --- NEW: Mobile state ---
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
@@ -308,7 +287,7 @@ export default function ChatPage() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const prevIsLoadingRef = useRef(isLoading)
   const [lastTTSMessageId, setLastTTSMessageId] = useState<string | null>(null)
-
+  
   // --- NEW: Effect to check device size ---
   useEffect(() => {
     const checkDevice = () => setIsMobile(window.innerWidth < 768); // 768px is 'md' breakpoint
@@ -417,7 +396,7 @@ export default function ChatPage() {
 
     const allowedExtensions = ['.txt', '.md', '.js', '.ts', '.tsx', '.jsx', '.css', '.html', '.json', '.py', '.c', '.cpp', '.go', '.java']
     const fileExtension = file.name.slice(file.name.lastIndexOf('.'))
-
+    
     if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
       alert('Please upload a valid text file (e.g., .txt, .md, .js, .ts, .css, .html, .json, .py).')
       if (e.target) e.target.value = ''
@@ -747,14 +726,15 @@ export default function ChatPage() {
     }
   }
 
-  // --- NEW: Render function for Mobile View ---
+// --- NEW: Render function for Mobile View ---
   const renderMobileView = () => {
     return (
       <div className={cn(
-        "relative flex h-screen w-full font-sans antialiased transition-colors duration-300",
+        // Use flex-col on the *root* element
+        "relative flex flex-col h-screen w-full font-sans antialiased transition-colors duration-300",
         isDarkMode ? "bg-zinc-950 text-white" : "bg-white text-zinc-900"
       )}>
-
+        
         {/* --- Hidden File Input --- */}
         <input
           type="file"
@@ -773,7 +753,7 @@ export default function ChatPage() {
             aria-hidden="true"
           />
         )}
-
+  
         {/* --- Mobile Sidebar (Slide-out Drawer) --- */}
         <aside className={cn(
           "flex flex-col w-64 border-r flex-shrink-0",
@@ -784,7 +764,7 @@ export default function ChatPage() {
             ? "border-zinc-800 bg-zinc-950"
             : "border-zinc-200 bg-zinc-50"
         )}>
-          {/* ... sidebar content ... */}
+          {/* Sidebar Header */}
           <div className={cn(
             "flex h-[60px] items-center justify-between px-4 border-b",
             "transition-colors duration-300",
@@ -799,7 +779,6 @@ export default function ChatPage() {
             )}>
               AI Chatbot
             </h1>
-            {/* Added a close button for mobile */}
             <button
               onClick={() => setSidebarOpen(false)}
               className={cn(
@@ -810,6 +789,8 @@ export default function ChatPage() {
               <X size={18} />
             </button>
           </div>
+
+          {/* Sidebar Content (Scrollable) */}
           <div className={cn(
             "flex-1 overflow-y-auto",
             "[&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-300",
@@ -880,6 +861,8 @@ export default function ChatPage() {
               ))}
             </nav>
           </div>
+
+          {/* Sidebar Footer */}
           <div className={cn(
             "p-4 border-t",
             "transition-colors duration-300",
@@ -914,267 +897,150 @@ export default function ChatPage() {
             </div>
           </div>
         </aside>
-
-        {/* --- Main Content (Empty Chat) --- */}
-        {activeChat && activeChat.messages.length === 0 ? (
-          <main 
-            className="flex flex-col flex-1 h-screen overflow-hidden"
-            // --- NEW: Add padding to main container to avoid overlap with fixed input ---
-            style={{ paddingBottom: 'calc(92px + env(safe-area-inset-bottom))' }}
-          >
-            {/* --- MODIFIED HEADER --- */}
-            <header className={cn(
-              "flex items-center justify-between h-[60px] border-b px-4 z-10 flex-shrink-0",
+  
+        {/* --- Main Header (Anchored Top) --- */}
+        <header className={cn(
+          "flex items-center justify-between h-[60px] border-b px-4 z-10 flex-shrink-0",
+          "transition-colors duration-300",
+          isDarkMode
+            ? "border-zinc-800 bg-zinc-900/90 backdrop-blur-md"
+            : "border-zinc-200 bg-white/90 backdrop-blur-md"
+        )}>
+          {/* Left Button */}
+          <div className="flex">
+            <button
+              className={cn(
+                "p-2 rounded-md transition-all",
+                isDarkMode
+                  ? "bg-zinc-900 hover:bg-zinc-800"
+                  : "bg-white shadow hover:bg-zinc-50"
+              )}
+              onClick={() => setSidebarOpen(s => !s)}
+            >
+              <PanelLeft size={19} className={isDarkMode ? "text-zinc-400" : "text-zinc-600"} />
+            </button>
+          </div>
+          
+          {/* Centered Title */}
+          <div className="flex-1 text-center min-w-0">
+            <h2 className={cn(
+              "text-lg font-semibold truncate px-2", // px-2 for spacing
               "transition-colors duration-300",
-              isDarkMode
-                ? "border-zinc-800 bg-zinc-900/90 backdrop-blur-md"
-                : "border-zinc-200 bg-white/90 backdrop-blur-md"
+              isDarkMode ? "text-white" : "text-zinc-900"
             )}>
-              {/* Left Button */}
-              <div className="flex">
-                <button
-                  className={cn(
-                    "p-2 rounded-md transition-all",
-                    isDarkMode
-                      ? "bg-zinc-900 hover:bg-zinc-800"
-                      : "bg-white shadow hover:bg-zinc-50"
-                  )}
-                  onClick={() => setSidebarOpen(s => !s)}
-                >
-                  <PanelLeft size={19} className={isDarkMode ? "text-zinc-400" : "text-zinc-600"} />
-                </button>
-              </div>
+              {activeChat?.title || 'Select a chat'}
+            </h2>
+          </div>
 
-              {/* Centered Title */}
-              <div className="flex-1 text-center min-w-0">
+          {/* Right Button */}
+          <div className="flex">
+            <button
+              className={cn(
+                "p-2 rounded-md transition-all",
+                isDarkMode
+                  ? "bg-zinc-900 hover:bg-zinc-800 text-zinc-400"
+                  : "bg-white shadow hover:bg-zinc-50 text-zinc-600 hover:text-indigo-600"
+              )}
+              onClick={() => setIsDarkMode(d => !d)}
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={17} />}
+            </button>
+          </div>
+        </header>
+
+        {/* --- Main Content (Scrollable Area) --- */}
+        <main className={cn(
+          "flex-1 overflow-y-auto", // This is the scrolling container
+          "[&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-300",
+          "[&::-webkit-scrollbar-track]:transition-colors [&::-webkit-scrollbar-track]:duration-300",
+          "transition-all duration-300",
+          isDarkMode
+            ? [
+              "[&::-webkit-scrollbar]:w-2",
+              "[&::-webkit-scrollbar-track]:bg-zinc-950",
+              "[&::-webkit-scrollbar-thumb]:bg-zinc-700",
+              "[&::-webkit-scrollbar-thumb]:rounded-md",
+              "[&::-webkit-scrollbar-thumb:hover]:bg-zinc-600",
+              "[scrollbar-width:thin]",
+              "[scrollbar-color:theme(colors.zinc.700)_theme(colors.zinc.950)]"
+            ]
+            : [
+              "[&::-webkit-scrollbar]:w-2",
+              "[&::-webkit-scrollbar-track]:bg-zinc-100",
+              "[&::-webkit-scrollbar-thumb]:bg-zinc-300",
+              "[&::-webkit-scrollbar-thumb]:rounded-md",
+              "[&::-webkit-scrollbar-thumb:hover]:bg-zinc-400",
+              "[scrollbar-width:thin]",
+              "[scrollbar-color:theme(colors.zinc.300)_theme(colors.zinc.100)]"
+            ]
+        )}>
+          {/* Conditional Content: Empty vs. Active Chat */}
+          {activeChat && activeChat.messages.length === 0 ? (
+            // --- Empty Chat View ---
+            <div className="flex flex-col items-center justify-center px-4 h-full">
+              <div className="w-full max-w-4xl text-center">
                 <h2 className={cn(
-                  "text-lg font-semibold truncate px-2", // px-2 for spacing
+                  "text-2xl font-semibold",
                   "transition-colors duration-300",
-                  isDarkMode ? "text-white" : "text-zinc-900"
+                  isDarkMode ? "text-zinc-100" : "text-zinc-800"
                 )}>
-                  {activeChat?.title || 'Select a chat'}
+                  Hello there!
                 </h2>
-              </div>
-
-              {/* Right Button */}
-              <div className="flex">
-                <button
-                  className={cn(
-                    "p-2 rounded-md transition-all",
-                    isDarkMode
-                      ? "bg-zinc-900 hover:bg-zinc-800 text-zinc-400"
-                      : "bg-white shadow hover:bg-zinc-50 text-zinc-600 hover:text-indigo-600"
-                  )}
-                  onClick={() => setIsDarkMode(d => !d)}
-                >
-                  {isDarkMode ? <Sun size={18} /> : <Moon size={17} />}
-                </button>
-              </div>
-
-              {/* --- HIDDEN Share/Delete buttons --- */}
-              <div className="hidden items-center gap-2">
-                <button className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 text-sm border rounded-md transition-colors duration-300",
-                  isDarkMode
-                    ? "border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                    : "border-zinc-200 text-zinc-700 hover:bg-zinc-100"
+                <p className={cn(
+                  "text-base mt-2",
+                  "transition-colors duration-300",
+                  isDarkMode ? "text-zinc-400" : "text-zinc-500"
                 )}>
-                  <Share size={14} />
-                  Share
-                </button>
-                {activeChat && (
-                  <button
-                    onClick={() => handleDeleteChat(activeChat.id)}
-                    className={cn(
-                      'flex items-center gap-2 px-3 py-1.5 text-sm border rounded-md transition-colors duration-300 font-medium',
-                      isDarkMode
-                        ? 'border-zinc-800 text-zinc-300 bg-zinc-900 hover:bg-zinc-800 hover:text-red-400'
-                        : 'border-zinc-200 text-zinc-500 bg-white/70 hover:bg-red-50 hover:text-red-600'
-                    )}
-                  >
-                    <Trash2 size={15} />
-                    Delete
-                  </button>
-                )}
-              </div>
-            </header>
-            {/* --- END MODIFIED HEADER --- */}
-
-            <div className="flex-1 flex flex-col items-center justify-center px-4">
-              <div className="w-full max-w-4xl">
-                <div className="text-center mb-6">
-                  <h2 className={cn(
-                    "text-2xl font-semibold",
-                    "transition-colors duration-300",
-                    isDarkMode ? "text-zinc-100" : "text-zinc-800"
-                  )}>
-                    Hello there!
-                  </h2>
-                  <p className={cn(
-                    "text-base",
-                    "transition-colors duration-300",
-                    isDarkMode ? "text-zinc-400" : "text-zinc-500"
-                  )}>
-                    How can I help you today?
-                  </p>
-                </div>
-                <InputForm
-                  centered={true}
-                  input={input}
-                  setInput={setInput}
-                  isLoading={isLoading}
-                  isDarkMode={isDarkMode}
-                  handleSubmit={handleSubmit}
-                  handleKeyDown={handleKeyDown}
-                  isVoiceModeActive={isVoiceModeActive}
-                  onVoiceToggle={handleVoiceToggle}
-                  onFileAttachClick={() => fileInputRef.current?.click()}
-                  fileName={fileName}
-                  onRemoveFile={handleRemoveFile}
-                  isMobile={true} // <-- Pass prop
-                />
+                  How can I help you today?
+                </p>
               </div>
             </div>
-          </main>
-        ) : (
-          // --- Main Content (Active Chat) ---
-          <main 
-            className="flex flex-col flex-1 h-screen overflow-hidden"
-            // --- NEW: Add padding to main container to avoid overlap with fixed input ---
-            style={{ paddingBottom: 'calc(92px + env(safe-area-inset-bottom))' }}
-          >
-            {/* --- MODIFIED HEADER --- */}
-            <header className={cn(
-              "flex items-center justify-between h-[60px] border-b px-4 z-10 flex-shrink-0",
-              "transition-colors duration-300",
-              isDarkMode
-                ? "border-zinc-800 bg-zinc-900/90 backdrop-blur-md"
-                : "border-zinc-200 bg-white/90 backdrop-blur-md"
-            )}>
-              {/* Left Button */}
-              <div className="flex">
-                <button
-                  className={cn(
-                    "p-2 rounded-md transition-all",
-                    isDarkMode
-                      ? "bg-zinc-900 hover:bg-zinc-800"
-                      : "bg-white shadow hover:bg-zinc-50"
-                  )}
-                  onClick={() => setSidebarOpen(s => !s)}
-                >
-                  <PanelLeft size={19} className={isDarkMode ? "text-zinc-400" : "text-zinc-600"} />
-                </button>
-              </div>
-
-              {/* Centered Title */}
-              <div className="flex-1 text-center min-w-0">
-                <h2 className={cn(
-                  "text-lg font-semibold truncate px-2", // px-2 for spacing
-                  "transition-colors duration-300",
-                  isDarkMode ? "text-white" : "text-zinc-900"
-                )}>
-                  {activeChat?.title || 'Select a chat'}
-                </h2>
-              </div>
-
-              {/* Right Button */}
-              <div className="flex">
-                <button
-                  className={cn(
-                    "p-2 rounded-md transition-all",
-                    isDarkMode
-                      ? "bg-zinc-900 hover:bg-zinc-800 text-zinc-400"
-                      : "bg-white shadow hover:bg-zinc-50 text-zinc-600 hover:text-indigo-600"
-                  )}
-                  onClick={() => setIsDarkMode(d => !d)}
-                >
-                  {isDarkMode ? <Sun size={18} /> : <Moon size={17} />}
-                </button>
-              </div>
-
-              {/* --- HIDDEN Share/Delete buttons --- */}
-              <div className="hidden items-center gap-2">
-                <button className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 text-sm border rounded-md transition-colors duration-300",
-                  isDarkMode
-                    ? "border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                    : "border-zinc-200 text-zinc-700 hover:bg-zinc-100"
-                )}>
-                  <Share size={14} />
-                  Share
-                </button>
-                {activeChat && (
-                  <button
-                    onClick={() => handleDeleteChat(activeChat.id)}
-                    className={cn(
-                      'flex items-center gap-2 px-3 py-1.5 text-sm border rounded-md transition-colors duration-300 font-medium',
-                      isDarkMode
-                        ? 'border-zinc-800 text-zinc-300 bg-zinc-900 hover:bg-zinc-800 hover:text-red-400'
-                        : 'border-zinc-200 text-zinc-500 bg-white/70 hover:bg-red-50 hover:text-red-600'
-                    )}
-                  >
-                    <Trash2 size={15} />
-                    Delete
-                  </button>
-                )}
-              </div>
-            </header>
-            {/* --- END MODIFIED HEADER --- */}
-
-            <div className={cn(
-              "flex-1 overflow-y-auto",
-              "[&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-300",
-              "[&::-webkit-scrollbar-track]:transition-colors [&::-webkit-scrollbar-track]:duration-300",
-              "transition-all duration-300",
-              isDarkMode
-                ? [
-                  "[&::-webkit-scrollbar]:w-2",
-                  "[&::-webkit-scrollbar-track]:bg-zinc-950",
-                  "[&::-webkit-scrollbar-thumb]:bg-zinc-700",
-                  "[&::-webkit-scrollbar-thumb]:rounded-md",
-                  "[&::-webkit-scrollbar-thumb:hover]:bg-zinc-600",
-                  "[scrollbar-width:thin]",
-                  "[scrollbar-color:theme(colors.zinc.700)_theme(colors.zinc.950)]"
-                ]
-                : [
-                  "[&::-webkit-scrollbar]:w-2",
-                  "[&::-webkit-scrollbar-track]:bg-zinc-100",
-                  "[&::-webkit-scrollbar-thumb]:bg-zinc-300",
-                  "[&::-webkit-scrollbar-thumb]:rounded-md",
-                  "[&::-webkit-scrollbar-thumb:hover]:bg-zinc-400",
-                  "[scrollbar-width:thin]",
-                  "[scrollbar-color:theme(colors.zinc.300)_theme(colors.zinc.100)]"
-                ]
-            )}>
-              <div className="max-w-4xl mx-auto px-4 pt-4 md:pt-6 pb-4">
-                <div className="flex flex-col gap-6">
-                  {activeChat?.messages.map(message => (
-                    <ChatBubble key={message.id} message={message} isDarkMode={isDarkMode} />
-                  ))}
-                  {isLoading && (
-                    <div className="flex justify-start">
-                      <div className={cn(
-                        "px-4 py-3 rounded-md shadow border",
+          ) : (
+            // --- Active Chat View ---
+            <div className="max-w-4xl mx-auto px-4 pt-4 md:pt-6 pb-4">
+              <div className="flex flex-col gap-6">
+                {activeChat?.messages.map(message => (
+                  <ChatBubble key={message.id} message={message} isDarkMode={isDarkMode} />
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-md flex-shrink-0 mr-2 mt-2 transition-colors duration-300",
+                      isDarkMode ? "bg-zinc-900" : "bg-zinc-100")}>
+                      <Bot size={18} className={cn(
                         "transition-colors duration-300",
-                        isDarkMode
-                          ? "bg-zinc-900 text-zinc-100 shadow-sm border border-zinc-800"
-                          : "bg-white border border-gray-200 text-zinc-800 shadow-sm"
-                      )}>
-                        <div className="flex gap-1.5">
-                          <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
-                        </div>
+                        isDarkMode ? "text-zinc-400" : "text-zinc-500")} />
+                    </div>
+                    <div className={cn(
+                      'px-4 py-3 rounded-md max-w-2xl flex flex-col rounded-tl-md shadow-sm',
+                      'transition-colors duration-300',
+                      isDarkMode
+                        ? "bg-zinc-900 text-zinc-100 border border-zinc-800"
+                        : "bg-white border border-gray-200 text-zinc-800"
+                    )}>
+                      <div className="flex gap-1.5">
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
                       </div>
                     </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
             </div>
-            
-            {/* --- NEW: Fixed InputForm, no wrapper div --- */}
+          )}
+        </main>
+        
+        {/* --- Input Form (Anchored Bottom) --- */}
+        <div className={cn(
+          "px-4 pt-0 pb-4 flex-shrink-0",
+          "transition-colors duration-300",
+          isDarkMode ? "border-zinc-800" : "border-zinc-200"
+        )}>
+          <div className="max-w-4xl mx-auto">
             <InputForm
+              // `centered` prop is no longer needed in this layout
               input={input}
               setInput={setInput}
               isLoading={isLoading}
@@ -1186,11 +1052,9 @@ export default function ChatPage() {
               onFileAttachClick={() => fileInputRef.current?.click()}
               fileName={fileName}
               onRemoveFile={handleRemoveFile}
-              isMobile={true} // <-- Pass prop
             />
-
-          </main>
-        )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -1212,7 +1076,7 @@ export default function ChatPage() {
           accept=".txt,.md,.js,.ts,.tsx,.jsx,.css,.html,.json,.py,.c,.cpp,.go,.java"
         />
         <audio ref={audioRef} style={{ display: "none" }} />
-
+  
         {/* Sidebar - (unchanged) */}
         {sidebarOpen && (
           <aside className={cn(
@@ -1342,7 +1206,7 @@ export default function ChatPage() {
             </div>
           </aside>
         )}
-
+  
         {/* Main Content - (unchanged structure) */}
         {activeChat && activeChat.messages.length === 0 ? (
           <main className="flex flex-col flex-1 h-screen overflow-hidden">
@@ -1443,7 +1307,6 @@ export default function ChatPage() {
                   onFileAttachClick={() => fileInputRef.current?.click()}
                   fileName={fileName}
                   onRemoveFile={handleRemoveFile}
-                  isMobile={false} // <-- Pass prop
                 />
               </div>
             </div>
@@ -1585,7 +1448,6 @@ export default function ChatPage() {
                   onFileAttachClick={() => fileInputRef.current?.click()}
                   fileName={fileName}
                   onRemoveFile={handleRemoveFile}
-                  isMobile={false} // <-- Pass prop
                 />
               </div>
             </div>
