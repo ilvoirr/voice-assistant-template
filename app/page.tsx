@@ -731,7 +731,7 @@ export default function ChatPage() {
     return (
       <div className={cn(
         // Use flex-col on the *root* element
-        "relative flex flex-col h-screen w-full font-sans antialiased transition-colors duration-300",
+        "relative flex flex-col h-dvh w-full font-sans antialiased transition-colors duration-300",
         isDarkMode ? "bg-zinc-950 text-white" : "bg-white text-zinc-900"
       )}>
         
