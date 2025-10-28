@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   const { text } = await req.json();
   
   // This is the SAME key you use for the microphone
-  const key = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY; 
+  const key = process.env.DEEPGRAM_API_KEY; 
 
   if (!key || !text) {
     return NextResponse.json(
