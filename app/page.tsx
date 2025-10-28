@@ -262,8 +262,11 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isDarkMode, setIsDarkMode] = useState(false)
   
-  // --- NEW: Mobile state ---
+  // --- Mobile state ---
   const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  // --- NEW: State to hold the dynamic viewport height for mobile ---
+  const [mobileViewportHeight, setMobileViewportHeight] = useState('100vh');
 
   // --- New File State ---
   const [fileContent, setFileContent] = useState<string | null>(null)
@@ -288,13 +291,48 @@ export default function ChatPage() {
   const prevIsLoadingRef = useRef(isLoading)
   const [lastTTSMessageId, setLastTTSMessageId] = useState<string | null>(null)
   
-  // --- NEW: Effect to check device size ---
+  // --- Effect to check device size ---
   useEffect(() => {
-    const checkDevice = () => setIsMobile(window.innerWidth < 768); // 768px is 'md' breakpoint
+    // We'll set isMobile to true only if it's a touch device AND small screen
+    // This avoids resizing issues on desktops with small windows.
+    const checkDevice = () => {
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(isTouch && isSmallScreen);
+    }
     checkDevice();
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  // --- NEW: Effect to handle mobile viewport resizing (for keyboard/browser UI) ---
+  useEffect(() => {
+    if (!isMobile) {
+      // If not mobile, just use 100vh
+      setMobileViewportHeight('100vh');
+      return;
+    }
+
+    const handleResize = () => {
+      if (window.visualViewport) {
+        // Use the visualViewport API to get the *actual* visible height
+        setMobileViewportHeight(`${window.visualViewport.height}px`);
+      } else {
+        // Fallback for older browsers
+        setMobileViewportHeight('100vh');
+      }
+    };
+
+    // Set the height immediately
+    handleResize();
+
+    // Add listener for when the keyboard opens/closes or URL bar hides
+    const visualViewport = window.visualViewport;
+    visualViewport?.addEventListener('resize', handleResize);
+
+    return () => visualViewport?.removeEventListener('resize', handleResize);
+  }, [isMobile]); // Re-run this effect if isMobile changes
+
 
   // Keep ref values in sync with state
   useEffect(() => { isVoiceModeActiveRef.current = isVoiceModeActive }, [isVoiceModeActive])
@@ -726,12 +764,17 @@ export default function ChatPage() {
     }
   }
 
-// --- NEW: Render function for Mobile View ---
+  // --- Render function for Mobile View ---
   const renderMobileView = () => {
     return (
-      <div className={cn(
-        "relative flex h-screen w-full font-sans antialiased transition-colors duration-300",
-        isDarkMode ? "bg-zinc-950 text-white" : "bg-white text-zinc-900"
+      <div 
+        // --- THIS IS THE FIX ---
+        // Use the dynamic viewport height from state
+        style={{ height: mobileViewportHeight }} 
+        className={cn(
+          // Remove h-screen, let the style handle the height
+          "relative flex w-full font-sans antialiased transition-colors duration-300",
+          isDarkMode ? "bg-zinc-950 text-white" : "bg-white text-zinc-900"
       )}>
         
         {/* --- Hidden File Input --- */}
@@ -895,8 +938,9 @@ export default function ChatPage() {
         </aside>
   
         {/* --- Main Content (Empty Chat) --- */}
+        {/* This main container now has h-full to respect the parent's dynamic height */}
         {activeChat && activeChat.messages.length === 0 ? (
-          <main className="flex flex-col flex-1 h-screen overflow-hidden">
+          <main className="flex flex-col flex-1 h-full overflow-hidden">
             {/* --- MODIFIED HEADER --- */}
             <header className={cn(
               "flex items-center justify-between h-[60px] border-b px-4 z-10 flex-shrink-0",
@@ -1012,7 +1056,8 @@ export default function ChatPage() {
           </main>
         ) : (
           // --- Main Content (Active Chat) ---
-          <main className="flex flex-col flex-1 h-screen overflow-hidden">
+          // This main container now has h-full to respect the parent's dynamic height
+          <main className="flex flex-col flex-1 h-full overflow-hidden">
             {/* --- MODIFIED HEADER --- */}
             <header className={cn(
               "flex items-center justify-between h-[60px] border-b px-4 z-10 flex-shrink-0",
@@ -1169,7 +1214,7 @@ export default function ChatPage() {
     );
   }
 
-  // --- NEW: Render function for Desktop View ---
+  // --- Render function for Desktop View ---
   const renderDesktopView = () => {
     // This is the original JSX return
     return (
@@ -1567,6 +1612,6 @@ export default function ChatPage() {
     );
   }
 
-  // --- NEW: Final conditional return ---
+  // --- Final conditional return ---
   return isMobile ? renderMobileView() : renderDesktopView();
 }
