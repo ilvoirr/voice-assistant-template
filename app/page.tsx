@@ -765,10 +765,10 @@ export default function ChatPage() {
   }
 
   // --- Render function for Mobile View ---
+ // --- Render function for Mobile View ---
   const renderMobileView = () => {
     return (
       <div 
-        // --- THIS IS THE FIX ---
         // Use the dynamic viewport height from state
         style={{ height: mobileViewportHeight }} 
         className={cn(
@@ -938,10 +938,9 @@ export default function ChatPage() {
         </aside>
   
         {/* --- Main Content (Empty Chat) --- */}
-        {/* This main container now has h-full to respect the parent's dynamic height */}
+        {/* Note: Removed overflow-hidden from main */}
         {activeChat && activeChat.messages.length === 0 ? (
-          <main className="flex flex-col flex-1 h-full overflow-hidden">
-            {/* --- MODIFIED HEADER --- */}
+          <main className="flex flex-col flex-1 h-full"> 
             <header className={cn(
               "flex items-center justify-between h-[60px] border-b px-4 z-10 flex-shrink-0",
               "transition-colors duration-300",
@@ -1017,7 +1016,6 @@ export default function ChatPage() {
                 )}
               </div>
             </header>
-            {/* --- END MODIFIED HEADER --- */}
 
             <div className="flex-1 flex flex-col items-center justify-center px-4">
               <div className="w-full max-w-4xl">
@@ -1056,9 +1054,8 @@ export default function ChatPage() {
           </main>
         ) : (
           // --- Main Content (Active Chat) ---
-          // This main container now has h-full to respect the parent's dynamic height
-          <main className="flex flex-col flex-1 h-full overflow-hidden">
-            {/* --- MODIFIED HEADER --- */}
+          // Note: Removed overflow-hidden from main
+          <main className="flex flex-col flex-1 h-full">
             <header className={cn(
               "flex items-center justify-between h-[60px] border-b px-4 z-10 flex-shrink-0",
               "transition-colors duration-300",
@@ -1134,10 +1131,10 @@ export default function ChatPage() {
                 )}
               </div>
             </header>
-            {/* --- END MODIFIED HEADER --- */}
             
+            {/* Chat History Area */}
             <div className={cn(
-              "flex-1 overflow-y-auto",
+              "flex-1 overflow-y-auto", // This takes remaining space and scrolls
               "[&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-300",
               "[&::-webkit-scrollbar-track]:transition-colors [&::-webkit-scrollbar-track]:duration-300",
               "transition-all duration-300",
@@ -1187,8 +1184,10 @@ export default function ChatPage() {
                 </div>
               </div>
             </div>
+
+            {/* Input Area */}
             <div className={cn(
-              "px-4 pt-0 pb-4 flex-shrink-0",
+              "px-4 pt-0 pb-4 flex-shrink-0", // Stays at the bottom
               "transition-colors duration-300",
               isDarkMode ? "border-zinc-800" : "border-zinc-200"
             )}>
