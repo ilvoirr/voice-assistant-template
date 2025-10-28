@@ -1,6 +1,13 @@
 'use client'
 
-import React, { useState, useRef, useEffect, FormEvent, useCallback } from 'react'
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  FormEvent,
+  useCallback,
+  useImperativeHandle
+} from 'react'
 import {
   PanelLeft,
   MessageSquarePlus,
@@ -124,12 +131,17 @@ interface InputFormProps {
   onRemoveFile: () => void
 }
 
-const InputForm = React.memo(({
+// --- NEW: Handle type for the ref ---
+interface InputFormHandle {
+  focus: () => void;
+}
+
+const InputForm = React.memo(React.forwardRef<InputFormHandle, InputFormProps>(({
   centered = false,
   input, setInput, isLoading, isDarkMode, handleSubmit, handleKeyDown,
   isVoiceModeActive, onVoiceToggle,
   onFileAttachClick, fileName, onRemoveFile // <-- Destructure new props
-}: InputFormProps) => {
+}, ref) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
     if (textareaRef.current) {
@@ -137,6 +149,13 @@ const InputForm = React.memo(({
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
     }
   }, [input])
+
+  // --- NEW: Expose focus method to parent ref ---
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      textareaRef.current?.focus()
+    }
+  }))
 
   return (
     <>
@@ -179,7 +198,7 @@ const InputForm = React.memo(({
         {/* --- End File Attachment UI --- */}
 
         <textarea
-          ref={textareaRef}
+          ref={textareaRef} // <-- This still uses the internal ref
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -251,7 +270,7 @@ const InputForm = React.memo(({
       </p>
     </>
   )
-})
+}))
 InputForm.displayName = 'InputForm'
 
 export default function ChatPage() {
@@ -287,6 +306,9 @@ export default function ChatPage() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const prevIsLoadingRef = useRef(isLoading)
   const [lastTTSMessageId, setLastTTSMessageId] = useState<string | null>(null)
+  
+  // --- NEW: Ref for InputForm handle ---
+  const inputFormRef = useRef<InputFormHandle>(null)
   
   // --- NEW: Effect to check device size ---
   useEffect(() => {
@@ -346,8 +368,26 @@ export default function ChatPage() {
         setLastTTSMessageId(lastMsg.id)
       }
     }
-    prevIsLoadingRef.current = isLoading
+    // --- FIX: REMOVED prevIsLoadingRef.current = isLoading FROM HERE ---
   }, [isLoading, activeChat, lastTTSMessageId, playTTS, isVoiceModeActive])
+
+  // --- NEW: Effect to auto-focus input on desktop ---
+  useEffect(() => {
+    // Auto-focus input on desktop after bot replies
+    if (
+      prevIsLoadingRef.current && // Was loading
+      !isLoading &&              // Is not loading anymore
+      !isMobile &&                 // Is desktop
+      !isVoiceModeActive         // Voice mode is off
+    ) {
+      inputFormRef.current?.focus();
+    }
+  }, [isLoading, isMobile, isVoiceModeActive]); // Depends on these states
+
+  // --- FIX: This effect now *only* updates prevIsLoadingRef and MUST come *after* any effects that read it ---
+  useEffect(() => {
+    prevIsLoadingRef.current = isLoading
+  }, [isLoading])
 
   useEffect(() => { stopTTS() }, [activeChat?.id, stopTTS])
 
@@ -1040,7 +1080,7 @@ export default function ChatPage() {
         )}>
           <div className="max-w-4xl mx-auto">
             <InputForm
-              // `centered` prop is no longer needed in this layout
+              // --- NOTE: No ref passed here for mobile ---
               input={input}
               setInput={setInput}
               isLoading={isLoading}
@@ -1293,8 +1333,9 @@ export default function ChatPage() {
                     How can I help you today?
                   </p>
                 </div>
-                {/* --- Pass new props to InputForm --- */}
+                {/* --- NEW: Pass ref to InputForm --- */}
                 <InputForm
+                  ref={inputFormRef}
                   centered={true}
                   input={input}
                   setInput={setInput}
@@ -1411,16 +1452,23 @@ export default function ChatPage() {
                   {isLoading && (
                     <div className="flex justify-start">
                       <div className={cn(
-                        "px-4 py-3 rounded-md shadow border",
-                        "transition-colors duration-300",
+                        "flex items-center justify-center w-8 h-8 rounded-md flex-shrink-0 mr-2 mt-2 transition-colors duration-300",
+                        isDarkMode ? "bg-zinc-900" : "bg-zinc-100")}>
+                        <Bot size={18} className={cn(
+                          "transition-colors duration-300",
+                          isDarkMode ? "text-zinc-400" : "text-zinc-500")} />
+                      </div>
+                      <div className={cn(
+                        'px-4 py-3 rounded-md max-w-2xl flex flex-col rounded-tl-md shadow-sm',
+                        'transition-colors duration-300',
                         isDarkMode
-                          ? "bg-zinc-900 text-zinc-100 shadow-sm border border-zinc-800"
-                          : "bg-white border border-gray-200 text-zinc-800 shadow-sm"
+                          ? "bg-zinc-900 text-zinc-100 border border-zinc-800"
+                          : "bg-white border border-gray-200 text-zinc-800"
                       )}>
                         <div className="flex gap-1.5">
                           <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
                           <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                          <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style={{ animationDelay: '3This is the same code as last time, just with the `useEffect` logic corrected.0ms' }}></div>
                         </div>
                       </div>
                     </div>
@@ -1435,8 +1483,9 @@ export default function ChatPage() {
               isDarkMode ? "border-zinc-800" : "border-zinc-200"
             )}>
               <div className="max-w-4xl mx-auto">
-                {/* --- Pass new props to InputForm --- */}
+                {/* --- NEW: Pass ref to InputForm --- */}
                 <InputForm
+                  ref={inputFormRef}
                   input={input}
                   setInput={setInput}
                   isLoading={isLoading}
